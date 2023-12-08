@@ -91,7 +91,7 @@ class SlotAttentionAutoEncoder(nn.Module):
        encoder_block += [nn.Conv2d(in_channels=64,out_channels=64, kernel_size=4, stride=2, padding=1,),nn.ReLU()] 
     self.encoder_cnn = nn.Sequential(encoder_block)
 
-    self.decoder_initial_size = (16, 16)
+    self.decoder_initial_size = (8, 8)
     self.decoder_cnn = nn.Sequential([
         nn.ConvTranspose2d(64,64, 4, strides=(2, 2), padding=1),
         nn.ReLU(),
@@ -108,7 +108,7 @@ class SlotAttentionAutoEncoder(nn.Module):
     self.encoder_pos = SoftPositionEmbed(64, self.resolution)
     self.decoder_pos = SoftPositionEmbed(64, self.decoder_initial_size)
 
-    self.layer_norm = nn.LayerNorm()
+    self.layer_norm = nn.LayerNorm(self.decoder_initial_size[0]*self.decoder_initial_size[1])
     self.ch_conv = nn.Sequential([nn.Conv2d(64,64,1,stride=1,padding=0),
         nn.ReLU(),
         nn.Conv2d(64,64,1,stride=1,padding=0)])

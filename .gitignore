@@ -1,0 +1,10 @@
+__pycache__
+
+*.jpg
+*.png
+dataset
+log
+test_img
+runs
+*.txt
+data

@@ -73,18 +73,20 @@ class SlotAttention(nn.Module):
 class SlotAttentionAutoEncoder(nn.Module):
   """Slot Attention-based auto-encoder for object discovery."""
 
-  def __init__(self, resolution, num_slots, num_iterations):
+  def __init__(self, resolution, num_slots, num_iterations, device):
     """Builds the Slot Attention-based auto-encoder.
 
     Args:
       resolution: Tuple of integers specifying width and height of input image.
       num_slots: Number of slots in Slot Attention.
       num_iterations: Number of iterations in Slot Attention.
+      device: which divice want to run 
     """
     super(SlotAttentionAutoEncoder,self).__init__()
     self.resolution = resolution #(128,128)
     self.num_slots = num_slots
     self.num_iterations = num_iterations
+    self.device = device
 
     encoder_block = [nn.Conv2d(in_channels=3,out_channels=64, kernel_size=5, stride=1, padding=2,),nn.ReLU()]
     for _ in range(3):
@@ -109,9 +111,9 @@ class SlotAttentionAutoEncoder(nn.Module):
     self.decoder_pos = SoftPositionEmbed(64, self.decoder_initial_size)
 
     self.layer_norm = nn.LayerNorm(normalized_shape=(self.resolution[0]*self.resolution[1]))
-    self.ch_conv = nn.Sequential(nn.Conv2d(64,64,1,stride=1,padding=0),
+    self.mlp = nn.Sequential(nn.Linear(64,64),
         nn.ReLU(),
-        nn.Conv2d(64,64,1,stride=1,padding=0))
+        nn.Linear(64,64))
 
     self.slot_attention = SlotAttention(
         iters=self.num_iterations,
@@ -123,12 +125,11 @@ class SlotAttentionAutoEncoder(nn.Module):
       # `image` has shape: [batch_size,num_channels, width, height ].
       # Convolutional encoder with position embedding.
       x = self.encoder_cnn(image)  # CNN Backbone.
-      x = self.encoder_pos(x)  # Position embedding.
-      x = self.spatial_flatten(x)  # Flatten spatial dimensions (treat image as set).
-      x = self.ch_conv(self.layer_norm(x))  # Feedforward network on set.
+      x = self.encoder_pos(x, build_grid(self.resolution).to(self.device))  # Position embedding.
+      x = self.spatial_flatten(x)  # Flatten spatial dimensions (treat image as set). shape is (B, C, H*W)
+      x = self.mlp(self.layer_norm(x).permute(0,2,1))  # Feedforward network on set. shape is (B, H*W, C)
       # `x` has shape: [batch_size,64, width*height ] 
       #注意送進 slot attention module的(B,N, dim)為(batch, N==每一個像素, dim==每一個像素用幾個channel去表示)所以需要permute軸
-      x = x.permute(0,2,1)
       # Slot Attention module.
       slots = self.slot_attention(x)
       # `slots` has shape: [batch_size, num_slots, slot_size].
@@ -136,7 +137,7 @@ class SlotAttentionAutoEncoder(nn.Module):
       # Spatial broadcast decoder.
       x = self.spatial_broadcast(slots, self.decoder_initial_size)
       # `x` has shape: [batch_size*num_slots,slot_size, width_init, height_init].
-      x = self.decoder_pos(x)
+      x = self.decoder_pos(x, build_grid(self.decoder_initial_size).to(self.device))
       x = self.decoder_cnn(x)
       # `x` has shape: [batch_size*num_slots,num_channels+1, width, height].
 
@@ -182,13 +183,11 @@ class SoftPositionEmbed(nn.Module):
     """
     super(SoftPositionEmbed,self).__init__()
     self.ch_embedding = nn.Conv2d(4,input_channel,kernel_size=1,stride=1,bias=True)
-    self.grid = build_grid(resolution) # embedding 初始化
-    # print("shape of grid: ",self.grid.shape)
 
-  def forward(self, x):
+  def forward(self, x, grid):
     # print(self.ch_embedding(self.grid).shape)
     # print(x.shape)
-    return x + self.ch_embedding(self.grid)
+    return x + self.ch_embedding(grid)
   
 
 def build_grid(resolution):

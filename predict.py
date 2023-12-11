@@ -7,11 +7,11 @@ import numpy as np
 
 def main():
     model = SlotAttentionAutoEncoder(resolution=(128,128),num_slots=2,num_iterations=3, device=torch.device("cpu"))
-    dataset = ChromosomeDataset(img_dir = r"data\zong\10000\val2017", mask_dir= r"data\zong\10000\val_mask",imgsize=128)
+    dataset = ChromosomeDataset(img_dir = r"F:\2023\chromosomes\chromosome_data\old_chang\val\images", mask_dir= r"F:\2023\chromosomes\chromosome_data\old_chang\val\masks",imgsize=128)
     loader = DataLoader(dataset,batch_size=1,shuffle=False)
     loader_iter = loader.__iter__()
     plotter = Ploter(model=model)
-    plotter.load_weight(r"log\log2\slot_autoencoder_68_0.pth")
+    plotter.load_weight(r"F:\2023\chromosomes\object_centric_learning\log\log4\slot_autoencoder_498_28.pth")
 
     while True:
         try:

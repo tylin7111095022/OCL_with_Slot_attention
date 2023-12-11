@@ -14,8 +14,8 @@ warnings.filterwarnings("ignore")
 from model import SlotAttentionAutoEncoder
 from dataset import ChromosomeDataset
 
-dir_img = r'data\zong\10000\train2017' #訓練集的圖片所在路徑
-dir_truth = r'data\zong\10000\train_mask' #訓練集的真實label所在路徑
+dir_img = r'F:\2023\chromosomes\chromosome_data\old_chang\images' #訓練集的圖片所在路徑
+dir_truth = None #訓練集的真實label所在路徑
 
 def get_args():
     parser = argparse.ArgumentParser(description = 'Train the UNet on images and target masks')
@@ -23,12 +23,12 @@ def get_args():
     parser.add_argument('--num_slot',type=int,default=2,help='number of slot in a picture')
     parser.add_argument('--num_iter',type=int,default=3,help="Number of attention iterations.")
     parser.add_argument('--imgsize',type=int,default=128,help='img size of dataset')
-    parser.add_argument('--total_epoch',type=int,default=100,metavar='E',help='times of training model')
-    parser.add_argument('--warm_up_epoch',type=int,default=30,help='warm up epoch')
+    parser.add_argument('--total_epoch',type=int,default=500,metavar='E',help='times of training model')
+    parser.add_argument('--warm_up_epoch',type=int,default=150,help='warm up epoch')
     parser.add_argument('--batch',type=int,default=64, help='Batch size')
     parser.add_argument("--save_every_iter",type=int, default=500)
     parser.add_argument('--rate_of_learning','-r',type = float, dest='lr', default=4e-4,help='learning rate of model')
-    parser.add_argument('--log_dir', type=str,default='log/log2',help='filename of log')
+    parser.add_argument('--log_dir', type=str,default='log/log4',help='filename of log')
     parser.add_argument('--device', type=str,default='cuda:0',help='training on cpu or gpu')
 
     return parser.parse_args()
